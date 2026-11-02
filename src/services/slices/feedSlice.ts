@@ -1,0 +1,53 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+import { getFeedsApi } from '../../utils/burger-api';
+
+import type { TFeedState } from '../../utils/types';
+
+export const getFeedsThunk = createAsyncThunk(
+  'feed/getFeeds',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await getFeedsApi();
+      return data; // Сервер возвращает объект созданного заказа
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Ошибка оформления заказа');
+    }
+  }
+);
+
+const initialState: TFeedState = {
+  orders: [],
+  total: 0,
+  totalToday: 0,
+  isLoading: false,
+  error: null,
+};
+
+export const feedSlice = createSlice({
+  name: 'feed',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(getFeedsThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getFeedsThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(getFeedsThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.orders = action.payload.orders;
+        state.total = action.payload.total;
+        state.totalToday = action.payload.totalToday;
+      });
+  },
+});
+
+export default feedSlice.reducer;
+// Через actions можно экспортировать только синхронные редюсеры
+// Асинхронные санки (createAsyncThunk) создаются отдельно
+// и экспортируются прямо на месте своего объявления.

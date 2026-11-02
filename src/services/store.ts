@@ -10,6 +10,7 @@ export type RootState = ReturnType<typeof rootReducer>;
 
 export type AppDispatch = typeof store.dispatch;
 
+////типизированные хуки чтобы не писать типы в  компонентах
 export const useDispatch = dispatchHook.withTypes<AppDispatch>();
 export const useSelector = selectorHook.withTypes<RootState>();
 
