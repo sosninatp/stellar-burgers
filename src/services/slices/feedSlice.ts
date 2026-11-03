@@ -10,8 +10,15 @@ export const getFeedsThunk = createAsyncThunk(
     try {
       const data = await getFeedsApi();
       return data; // Сервер возвращает объект созданного заказа
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка оформления заказа');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );

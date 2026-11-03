@@ -31,6 +31,7 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
     if (!constructorItems.bun || orderRequest) return;
     if (!user) {
       navigate('/login', { replace: true });
+      return;
     }
     dispatch(orderBurgerThunk(ingredientIds))
       .unwrap()

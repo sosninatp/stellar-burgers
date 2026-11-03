@@ -1,11 +1,15 @@
 import { Preloader, IngredientDetailsUI } from '@ui';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 import { useSelector } from '../../services/store';
 
+//Импортируем стили стартера из файла стилей приложения для одиночных страниц деталей
+import appStyles from '../app/app.module.css';
+
 export const IngredientDetails = (): React.JSX.Element => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
 
   const ingredients = useSelector((state) => state.ingredients.ingredients);
 
@@ -16,6 +20,17 @@ export const IngredientDetails = (): React.JSX.Element => {
 
   if (!ingredientData) {
     return <Preloader />;
+  }
+
+  // Проверяем, открыта ли страница как отдельная (в новой вкладке, без фонового бэкграунда)
+  const isDetailPage = !location.state?.background;
+
+  if (isDetailPage) {
+    return (
+      <div className={appStyles.detailPageWrap}>
+        <IngredientDetailsUI ingredientData={ingredientData} />
+      </div>
+    );
   }
 
   return <IngredientDetailsUI ingredientData={ingredientData} />;

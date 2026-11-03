@@ -34,9 +34,27 @@ export const constructorSlice = createSlice({
         }
       },
     },
+
     // Команда удаления конкретного ингредиента из конструктора по его уникальному id
     removeIngredient: (state, action: PayloadAction<string>) => {
       state.ingredients = state.ingredients.filter((el) => el.id != action.payload);
+    },
+
+    // Экшен для изменения порядка начинок в конструкторе
+    moveIngredient: (
+      state,
+      action: PayloadAction<{ index: number; direction: 'up' | 'down' }>
+    ) => {
+      const { index, direction } = action.payload;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+      // Защита: проверяем, чтобы индекс не вылетел за границы массива начинок
+      if (targetIndex < 0 || targetIndex >= state.ingredients.length) return;
+
+      // Меняем элементы местами прямо внутри стейта
+      const temp = state.ingredients[index];
+      state.ingredients[index] = state.ingredients[targetIndex];
+      state.ingredients[targetIndex] = temp;
     },
 
     // Команда очистки конструктора
@@ -49,5 +67,9 @@ export const constructorSlice = createSlice({
 
 export default constructorSlice.reducer;
 // Экспортируем команды-экшены для компонентов
-export const { addIngredient, removeIngredient, clearBurgerConstructor } =
-  constructorSlice.actions;
+export const {
+  addIngredient,
+  removeIngredient,
+  moveIngredient,
+  clearBurgerConstructor,
+} = constructorSlice.actions;

@@ -23,8 +23,15 @@ export const registerThunk = createAsyncThunk(
       setCookie('accessToken', data.accessToken);
 
       return data.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка регистрации');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );
@@ -40,8 +47,15 @@ export const loginThunk = createAsyncThunk(
       setCookie('accessToken', data.accessToken);
 
       return data.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка регистрации');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );
@@ -53,8 +67,15 @@ export const updateUserThunk = createAsyncThunk(
     try {
       const data = await updateUserApi(userData);
       return data.user;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка изменения данных пользователя');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );
@@ -70,8 +91,15 @@ export const logoutThunk = createAsyncThunk(
       deleteCookie('accessToken');
 
       return true;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка изменения данных пользователя');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     } finally {
       // Чистим токены в браузере в любом случае
       // Если сервер не нашел роут, всё равно выкидываем юзера на фронтенде
@@ -80,12 +108,6 @@ export const logoutThunk = createAsyncThunk(
     }
   }
 );
-
-// type TUserResponse = {
-//  success: boolean;
-// } & {
-//  user: TUser;
-// }
 
 // Асинхронный санк для фоновой проверки пользователя
 export const checkUserAuthThunk = createAsyncThunk(

@@ -11,8 +11,15 @@ export const orderBurgerThunk = createAsyncThunk(
     try {
       const data = await orderBurgerApi(ingredientIds);
       return data.order; // Сервер возвращает объект созданного заказа
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка оформления заказа');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );
@@ -24,8 +31,15 @@ export const getUserOrdersThunk = createAsyncThunk(
     try {
       const data = await getOrdersApi();
       return data; // заказы пользователя
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка получения заказов пользователя');
+    } catch (error: unknown) {
+      // Сужение: если это стандартный объект ошибки,
+      // TypeScript разрешает прочитать поле .message
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Если прилетела странная строка или null
+      return rejectWithValue('Произошла неизвестная ошибка');
     }
   }
 );
