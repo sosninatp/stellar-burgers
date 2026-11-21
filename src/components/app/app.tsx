@@ -1,27 +1,37 @@
 import { AppHeader } from '@components';
-import { ConstructorPage } from '@pages';
 import { Preloader } from '@ui';
-import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+
+import { getIngredientsThunk } from '../../services/slices/ingredientsSlice';
+import { checkUserAuthThunk } from '../../services/slices/userSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import RouteComponent from '../appRoutes/AppRoutes';
 
 import type { AppContentProps } from './type';
-import type { TIngredient } from '@utils-types';
 
 import '../../index.css';
 
 import styles from './app.module.css';
 
 const App = (): React.JSX.Element => {
-  const ingredients: TIngredient[] = [];
-  const isIngredientsLoading = false;
-  const ingredientsError = null;
+  const isIngredientsLoading = useSelector((state) => state.ingredients.isLoading);
+  const ingredientsError = useSelector((state) => state.ingredients.error);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // получение ингредиентов из апи диспатчем который сделали в сторе
+    dispatch(getIngredientsThunk());
+    // определиться залогинен ли пользователь - установить флаг isAuthChecked
+    dispatch(checkUserAuthThunk());
+  }, [dispatch]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
       <AppContent
-        ingredients={ingredients}
         isLoading={isIngredientsLoading}
-        error={ingredientsError}
+        error={ingredientsError ? new Error() : null}
       />
     </div>
   );
@@ -29,13 +39,7 @@ const App = (): React.JSX.Element => {
 
 export default App;
 
-/* Маршруты показываются только когда ингредиенты загружены: без них не
-   отрисовать ни конструктор, ни состав заказа. */
-const AppContent = ({
-  ingredients,
-  isLoading,
-  error,
-}: AppContentProps): React.JSX.Element => {
+const AppContent = ({ isLoading, error }: AppContentProps): React.JSX.Element => {
   if (isLoading) {
     return <Preloader />;
   }
@@ -49,21 +53,5 @@ const AppContent = ({
     );
   }
 
-  if (!ingredients.length) {
-    return (
-      <p className={`${styles.message} text text_type_main-medium`}>Нет ингредиентов</p>
-    );
-  }
-
   return <RouteComponent />;
-};
-
-const RouteComponent = (): React.JSX.Element => {
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<ConstructorPage />} />
-      </Routes>
-    </>
-  );
 };
