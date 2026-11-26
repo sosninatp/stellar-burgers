@@ -22,7 +22,7 @@ test.skip('записывает ингредиенты в HAR', async ({ page })
 });
 
 //Создание моковых данных для запроса данных пользователя
-test('записывает ответ GET /auth/user в HAR', async ({ page, context }) => {
+test.skip('записывает ответ GET /auth/user в HAR', async ({ page, context }) => {
   await context.addCookies([
     {
       name: 'accessToken',
@@ -135,21 +135,46 @@ test.describe('Интеграционные тесты страницы конс
     await expect(bun).toBeVisible();
   });
 
+
   test('Тест добавления ингредиветов в конструктор', async ({ page }) => {
-    const mainsList = page.getByRole('heading', { name: 'Начинки' }).locator(' + ul'); //+ ul означает непосредственно следующий соседний элемент <ul>
-
-    const firstMain = mainsList.getByRole('listitem').first();
-    await firstMain.getByRole('button', { name: 'Добавить' }).click();
-
-    const mainName = await firstMain.locator('p').last().innerText();
-
-    // берем контруктор
+    // берем конcтруктор
     const burgerConstructor = page.locator(
       '[class*="burger-constructor__burger_constructor_"]' //*= означает «значение атрибута содержит эту строку»
     );
+    // проверяем что изначально конструктор пуст
+    await expect(burgerConstructor).toContainText('Выберите булки');
+    await expect(burgerConstructor).toContainText('Выберите начинку');
+   
+    // берем список булок
+    const bunsList = page.getByRole('heading', { name: 'Булки' }).locator(' + ul'); //+ ul означает непосредственно следующий соседний элемент <ul>
+    // бенрем первый элемент списка булок и добавляем его в конструктор
+    const firstBun = bunsList.getByRole('listitem').first();
+    await firstBun.getByRole('button', { name: 'Добавить' }).click();
+    const bunName = await firstBun.locator('p').last().innerText();
 
+    // берем список начинок
+    const mainsList = page.getByRole('heading', { name: 'Начинки' }).locator(' + ul'); 
+    // берем первый элемент списка начинок и добавляем его в конструктор
+    const firstMain = mainsList.getByRole('listitem').first();
+    await firstMain.getByRole('button', { name: 'Добавить' }).click();
+    const mainName = await firstMain.locator('p').last().innerText();
+
+    // берем список соусов
+    const saucesList = page.getByRole('heading', { name: 'Соусы' }).locator(' + ul'); 
+    // берем первый элемент списка соусов и добавляем его в конструктор
+    const firstSauce = saucesList.getByRole('listitem').first();
+    await firstSauce.getByRole('button', { name: 'Добавить' }).click();
+    const sauceName = await firstSauce.locator('p').last().innerText();
+
+    // проверяем что в конструкторе появились булка, начинка и соус
+    await expect(burgerConstructor).toContainText(`${bunName} (верх)`);
+    await expect(burgerConstructor).toContainText(`${bunName} (низ)`);
     await expect(burgerConstructor).toContainText(mainName);
+    await expect(burgerConstructor).toContainText(sauceName);
+    await expect(burgerConstructor).not.toContainText('Выберите булки');
+    await expect(burgerConstructor).not.toContainText('Выберите начинку');
   });
+
 
   test('Тест открытия и закрытия модального окна ингредиента', async ({ page }) => {
     // Ждём, пока ответ сервера отрисуется на странице (например, появится любая булка)
