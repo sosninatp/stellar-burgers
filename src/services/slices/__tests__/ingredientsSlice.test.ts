@@ -48,8 +48,6 @@ describe('Проверка работы редьюсера ingredientsReducer к
   test('Тест проверяет работу редьюсера ingredientsReducer  как функции при его вызове с неизвестым экшеном', () => {
     //предыдушее состояние
     const prevState = undefined;
-      Записывает его в хранилище (store) сам Redux только тогда, 
-      когда ты вызываешь store.dispatch(action).*/
     const state = ingredientsReducer(prevState, { type: 'UNKNOWN' });
     expect(state).toEqual({
       ingredients: [],
@@ -65,15 +63,16 @@ describe('Проверка работы редьюсера ingredientsReducer к
       error: 'Предыдущая ошибка',
     };
 
-    const state: TIngredientsState = ingredientsReducer(prevState, {
-      type: getIngredientsThunk.fulfilled.type,
-      payload: mockIngredients,
-    });
+    const action = getIngredientsThunk.fulfilled(
+      mockIngredients,
+      'request-id',
+      undefined
+    );
+    const state: TIngredientsState = ingredientsReducer(prevState, action);
 
     expect(state).toEqual({
       ingredients: mockIngredients,
       isLoading: false,
-      // error: null,
       error: 'Предыдущая ошибка',
     });
   });
@@ -85,9 +84,8 @@ describe('Проверка работы редьюсера ingredientsReducer к
       error: 'предыдущая ошибка',
     };
 
-    const state: TIngredientsState = ingredientsReducer(prevState, {
-      type: getIngredientsThunk.pending.type,
-    });
+    const action = getIngredientsThunk.pending('request-id', undefined);
+    const state: TIngredientsState = ingredientsReducer(prevState, action);
 
     expect(state).toEqual({
       ingredients: mockIngredients,
@@ -103,10 +101,13 @@ describe('Проверка работы редьюсера ingredientsReducer к
       error: null,
     };
 
-    const state: TIngredientsState = ingredientsReducer(prevState, {
-      type: getIngredientsThunk.rejected.type,
-      payload: 'Ошибка получения ингредиентов',
-    });
+    const action = getIngredientsThunk.rejected(
+      null,
+      'request-id',
+      undefined,
+      'Ошибка получения ингредиентов'
+    );
+    const state: TIngredientsState = ingredientsReducer(prevState, action);
 
     expect(state).toEqual({
       ingredients: mockIngredients,
