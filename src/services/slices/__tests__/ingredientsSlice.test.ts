@@ -56,7 +56,7 @@ describe('Проверка работы редьюсера ingredientsReducer к
     });
   });
 
-  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном fulfilled', async () => {
+  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном fulfilled', () => {
     const prevState: TIngredientsState = {
       ingredients: [],
       isLoading: true,
@@ -77,7 +77,7 @@ describe('Проверка работы редьюсера ingredientsReducer к
     });
   });
 
-  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном pending', async () => {
+  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном pending', () => {
     const prevState: TIngredientsState = {
       ingredients: mockIngredients,
       isLoading: false,
@@ -94,7 +94,7 @@ describe('Проверка работы редьюсера ingredientsReducer к
     });
   });
 
-  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном rejected', async () => {
+  test('Тест проверяет работу редьюсера ingredientsReducer как функции при его вызове с экшеном rejected', () => {
     const prevState: TIngredientsState = {
       ingredients: mockIngredients,
       isLoading: true,

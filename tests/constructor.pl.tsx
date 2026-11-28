@@ -4,116 +4,6 @@ const BUN_NAME = 'Краторная булка N-200i';
 const MAIN_NAME = 'Биокотлета из марсианской Магнолии';
 const ORDER_NUMBER = '1316';
 
-const ACCESS_TOKEN =
-  'актуальный access token для тестов, который нужно получить из вашей сессии';
-const REFRESH_TOKEN =
-  'актуальный refresh token для тестов, который нужно получить из вашей сессии';
-
-//Создание моковых данных для ингредиентов (в HAR-файле)
-test.skip('записывает ингредиенты в HAR', async ({ page }) => {
-  await page.routeFromHAR('./tests/hars/ingredients.har', {
-    url: '**/ingredients',
-    update: true,
-  });
-  // Открываем страницу, чтобы приложение отправило запрос ингредиентов
-  await page.goto('/');
-  // Ждём, пока ответ сервера отрисуется на странице (например, появится любая булка)
-  await expect(page.getByText(BUN_NAME)).toBeVisible();
-});
-
-//Создание моковых данных для запроса данных пользователя
-test.skip('записывает ответ GET /auth/user в HAR', async ({ page, context }) => {
-  await context.addCookies([
-    {
-      name: 'accessToken',
-      value: ACCESS_TOKEN,
-      url: 'http://localhost:4000',
-    },
-  ]);
-
-  await page.addInitScript((refreshToken) => {
-    localStorage.setItem('refreshToken', refreshToken);
-  }, REFRESH_TOKEN);
-
-  // Начинаем запись HAR
-  await page.routeFromHAR('./tests/hars/auth_user.har', {
-    url: '**/auth/user',
-    update: true,
-  });
-  // Открываем страницу, чтобы приложение отправило запрос
-  await page.goto('/');
-  // Ждём, пока ответ сервера отрисуется на странице (например, появится любая булка)
-  await expect(page.getByText(BUN_NAME)).toBeVisible();
-});
-
-//Создание моковых данных для ответа на запрос создания заказа
-test.skip('записывает ответ POST /orders в HAR', async ({ page, context }) => {
-  await context.addCookies([
-    {
-      name: 'accessToken',
-      value: ACCESS_TOKEN,
-      url: 'http://localhost:4000',
-    },
-  ]);
-
-  await page.addInitScript((refreshToken) => {
-    localStorage.setItem('refreshToken', refreshToken);
-  }, REFRESH_TOKEN);
-
-  // Начинаем запись HAR
-  await page.routeFromHAR('./tests/hars/orders.har', {
-    url: '**/orders',
-    update: true,
-  });
-
-  // Перед сборкой бургера дожидаемся успешного ответа /auth/user
-  await page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname.endsWith('/auth/user') &&
-      response.request().method() === 'GET'
-  );
-
-  await page.goto('/');
-
-  await expect(page.locator('header a[href="/profile"]')).not.toContainText(
-    'Личный кабинет'
-  );
-
-  // Ждём, пока ответ сервера отрисуется на странице (например, появится любая булка)
-  await expect(page.getByText(BUN_NAME)).toBeVisible();
-
-  // Находим булку
-  const bun = page.getByText(BUN_NAME);
-  await expect(bun).toBeVisible();
-  // Находим начинку
-  const main = page.getByText(MAIN_NAME);
-  await expect(main).toBeVisible();
-
-  // Добавляем булку и начинку:
-  const bunCard = page.locator('li', { hasText: BUN_NAME });
-  await bunCard.getByRole('button', { name: 'Добавить' }).click();
-  const mainCard = page.locator('li', { hasText: MAIN_NAME });
-  await mainCard.getByRole('button', { name: 'Добавить' }).click();
-
-  await expect(page.getByAltText(`${BUN_NAME} (верх)`)).toBeVisible();
-  await expect(page.getByAltText(`${BUN_NAME} (низ)`)).toBeVisible();
-  await expect(page.getByAltText(`${MAIN_NAME}`)).toBeVisible();
-
-  // API Playwright для ожидания сетевого ответа
-  const orderResponsePromise = page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname.endsWith('/orders') &&
-      response.request().method() === 'POST'
-  );
-
-  //нажимаем на кнопку 'Оформить заказ'
-  await page.getByRole('button', { name: 'Оформить заказ' }).click();
-
-  const orderResponse = await orderResponsePromise;
-
-  expect(orderResponse.ok()).toBeTruthy();
-});
-
 test.describe('Интеграционные тесты страницы конструктора бургера', () => {
   test.beforeEach(async ({ page }) => {
     // Перехватываем запрос на получение списка ингредиентов из HAR-файла
@@ -189,11 +79,15 @@ test.describe('Интеграционные тесты страницы конс
       .locator('#modals')
       .getByRole('button', { name: 'Закрыть' });
 
-    // закрываем модальное окно крестиком и проверяем, что оно исчезло:
+    // закрываем модальное окно крестиком и проверяем, что исчезли элементы окна и оверлей:
     await closeModalBtn.click();
-    await expect(modalTitle).not.toBeVisible();
+    await expect(modalTitle).toHaveCount(0);
+    await expect(closeModalBtn).toHaveCount(0);
+    await expect(page.getByTestId('modal-overlay')).toHaveCount(0);
+    // проверяем что у портала #modals не осталось ни одного дочернего элемента
+    await expect(page.locator('#modals > *')).toHaveCount(0);
 
-    // проверяем закрытие модального окна по клику на оверлей:
+    // закрытие модального окна по клику на оверлей:
     // нажимаем на ингредиент
     await bun.click();
     // проверяем появление его деталей в модальном окне:
@@ -205,11 +99,15 @@ test.describe('Интеграционные тесты страницы конс
     const modalOverlay = page.getByTestId('modal-overlay');
     await expect(modalOverlay).toBeVisible();
 
-    // закрываем модальное окно по клику на оверлей и проверяем, что оно исчезло:
+    // закрываем модальное окно по клику на оверлей и проверяем, что исчезли элементы окна и оверлей:
     // точка внутри самого элемента modalOverlay: 1 пиксель от его левого края и 1 пиксель от верхнего
     await modalOverlay.click({ position: { x: 1, y: 1 } });
 
-    await expect(modalTitle).not.toBeVisible();
+    await expect(modalTitle).toHaveCount(0);
+    await expect(closeModalBtn).toHaveCount(0);
+    await expect(page.getByTestId('modal-overlay')).toHaveCount(0);
+    // проверяем что у портала #modals не осталось ни одного дочернего элемента
+    await expect(page.locator('#modals > *')).toHaveCount(0);
 
     // закрываем модальное окно клавишей Escape
     // нажимаем на ингредиент
@@ -219,11 +117,15 @@ test.describe('Интеграционные тесты страницы конс
     await expect(
       page.locator('#modals').getByText(bunName, { exact: true })
     ).toBeVisible();
-    // закрываем модальное окно клавишей Escape и проверяем, что оно исчезло:
+    // закрываем модальное окно клавишей Escape и проверяем, что исчезли элементы окна и оверлей:
     // отправляе клавишу Escape через Playwright
     await page.keyboard.press('Escape');
-    await expect(modalTitle).not.toBeVisible();
-    await expect(page.locator('#modals')).not.toContainText(bunName);
+
+    await expect(modalTitle).toHaveCount(0);
+    await expect(closeModalBtn).toHaveCount(0);
+    await expect(page.getByTestId('modal-overlay')).toHaveCount(0);
+    // проверяем что у портала #modals не осталось ни одного дочернего элемента
+    await expect(page.locator('#modals > *')).toHaveCount(0);
   });
 
   test('Тест создает заказ и очищает конструктор', async ({ context, page }) => {
@@ -284,13 +186,12 @@ test.describe('Интеграционные тесты страницы конс
     // проверяем, что открылось модальное окно с номером заказа
     const orderModal = page.locator('#modals');
 
-    await expect(
-      orderModal.getByRole('heading', {
-        name: ORDER_NUMBER,
-        level: 2,
-        exact: true, //проверяет точное имя заголовка
-      })
-    ).toHaveText(ORDER_NUMBER); //дополнительно сравнивает содержимое заголовка с ожидаемым номером без частичного совпадения
+    const orderNumberHeading = orderModal.getByRole('heading', {
+      name: ORDER_NUMBER,
+      level: 2,
+      exact: true, //проверяет точное имя заголовка
+    });
+    await expect(orderNumberHeading).toHaveText(ORDER_NUMBER); // сравнивает содержимое заголовка с ожидаемым номером без частичного совпадения
 
     // Проверяем очистку конструктора до закрытия модального окна
     await expect(constructorSection).not.toContainText(`${BUN_NAME} (верх)`);
@@ -302,7 +203,12 @@ test.describe('Интеграционные тесты страницы конс
     // закрываем модальное окно
     const closeModalBtn = orderModal.getByRole('button', { name: 'Закрыть' });
     await closeModalBtn.click();
-    // проверяем, что модальное окно исчезло
-    await expect(orderModal).not.toBeVisible();
+
+    // проверяем, что исчезли элементы модального окна и оверлей
+    await expect(orderNumberHeading).toHaveCount(0);
+    await expect(closeModalBtn).toHaveCount(0);
+    await expect(page.getByTestId('modal-overlay')).toHaveCount(0);
+    // проверяем что у портала #modals не осталось ни одного дочернего элемента
+    await expect(page.locator('#modals > *')).toHaveCount(0);
   });
 });
